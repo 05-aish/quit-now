@@ -1,5 +1,9 @@
 function GoodBad({ onResponse, canSelectResponse, submitted }) {
-    if (!canSelectResponse) return null;
+    if (!canSelectResponse) return (
+    <div>
+        <div className="text-gray-400 mt-2 ml-2">You've already logged today's progress.</div>
+    </div>
+    );
     return (
     <div>
         <div>How did you do today?</div>

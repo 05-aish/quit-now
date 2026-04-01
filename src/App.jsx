@@ -4,7 +4,8 @@ import LogForm from './components/LogForm';
 import Toast from './components/Toast';
 import FeedbackMsg from './components/FeedbackMsg';
 import Entries from './components/Entries';
-import Pagination from './components/pagination';
+import Loading from './components/Loading';
+import Streak from './components/Streak';
 import BottomButtons from './components/BottomButtons';
 import Achievements from './components/Achievements';
 import Confetti from "react-confetti";
@@ -24,6 +25,14 @@ function App() {
     })
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (!session) {
+        setLoadingSession(false);
+        setHabit(null);
+        setStreakCount(0);
+        setEntries([]);
+        setLastEntryDate(null);
+        setAchievements([]);
+      }
     })
   }, [])
   
@@ -45,18 +54,27 @@ function App() {
   const [streakCount, setStreakCount] = useState(0);
   //habit state
   const [habit, setHabit] = useState(null);
+  const [loadingUserData, setLoadingUserData] = useState(true);
 
   //fetch user meta table containing streakcount and lastentry date
   const fetchUserMeta = async () => {
 
     if (!session) return
+
     const { data, error } = await supabase.from('user_meta').select('*').eq('user_id', session.user.id);
 
+    console.log("Fetched user meta:", data);
+    
     if (!error && data.length > 0) {
         setStreakCount(data[0].streak_count)
         setLastEntryDate(data[0].last_entry_date)
         setHabit(data[0].habit)
     }
+    else{
+      console.log("No user meta found", error);
+    }
+    setLoadingUserData(false);
+    
   }
 
   //handling write to database when streakcount or last entry date chnages, called in handle submit
@@ -66,8 +84,10 @@ function App() {
       user_id: session.user.id,
       streak_count: newStreak,
       last_entry_date: newLastEntryDate
-    })
+    },
+    { onConflict: 'user_id' })
     if (error) console.log(data, error);
+    
   }
 
   //state of input field
@@ -85,6 +105,8 @@ function App() {
   }
 
   useEffect(() => {
+    if (!session) return;
+
     fetchEntries()
     fetchUserMeta()
     fetchAchievements()
@@ -135,19 +157,23 @@ function App() {
     setFeedback(randomMessage);
   }
 
-  //timer logic to allow only one entry per day.
-  const [currentTime, setCurrentTime] = useState(Date.now());
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-  const COOLDOWN = 1000 // 24 hours in milliseconds
+  //streak logic helper functions to allow only one entry per day.
+  const isSameDay = (date1, date2) => {
+    return new Date(date1).toDateString() === new Date(date2).toDateString();
+  }
+  const isYesterday = (d1, d2) => {
+    const date1 = new Date(d1);
+    const date2 = new Date(d2);
+    
+    const yesterday = new Date(date2);
+    yesterday.setDate(date2.getDate() - 1);
 
-  //can  user select good/bad depending on cooldown and if they have an entry for the day already.
-  const canSelectResponse = (currentTime - lastEntryDate) >= COOLDOWN;
+    return date1.toDateString() === yesterday.toDateString();
+  };
   
+
+  const canSelectResponse = !lastEntryDate || !isSameDay(lastEntryDate, new Date());
+
   //check daily or manual log.
   const [isDailyLog, setIsDailyLog] = useState(false);
 
@@ -173,8 +199,6 @@ function App() {
     e.preventDefault();
     // Prevent the default form submission behavior
     console.log('Form submitted with input:', textFieldInput);
-    // Reset the input field after submission
-    setTextFieldInput('');
     //set submitted to true to show feedback message and then reset after 5 seconds
     setSubmitted(true);
      setTimeout(() => {
@@ -182,7 +206,7 @@ function App() {
     }, 5000); // 5 seconds
     setClicked(false);
 
-    //object to store in local storage.
+    //object to store in storage.
     const newEntry = {
     id: Date.now(),
     date: new Date().toDateString(),
@@ -191,14 +215,38 @@ function App() {
     }
 
     //update streak count
+    let newStreak = streakCount;
     if(isDailyLog){
-      const newStreak = userInput ? streakCount + 1 : 0
-      console.log('updating user meta', newStreak, currentTime)
+      const now = Date.now();
+
+      if (!userInput) {
+        newStreak = 0;
+        triggerToast("Streak reset. Don't give up💪");
+      }
+      else if (!lastEntryDate) {
+        newStreak = 1;
+      }
+      else if (isSameDay(lastEntryDate, now)) {
+        //same day entry, do not update streak
+        return;
+      }
+      else if (isYesterday(lastEntryDate, now)) {
+        newStreak = streakCount + 1;
+      }
+      else {
+        newStreak = 1; //missed more than a day, reset to 1 if today is good, otherwise 0
+      }
+
       setStreakCount(newStreak);
-      updateUserMeta(newStreak, currentTime);
+      setLastEntryDate(now); 
+      updateUserMeta(newStreak, now);
     }
+
     addEntry(newEntry);
     getRandomFeedback(userInput);
+
+    // Reset the input field after submission
+    setTextFieldInput('');
   }
 
   //achievement panel.
@@ -229,7 +277,6 @@ function App() {
 
   if (!alreadyAchieved) {
     const achievementUpdate = async () => await supabase.from('achievements').insert({
-      id: Date.now(),
       date: new Date().toDateString(),
       milestone,
       user_id: session.user.id
@@ -246,13 +293,12 @@ function App() {
   }
 }, [streakCount, achievements]);
    
+  console.log('session:', session?.user?.id, 'habit:', habit, 'loadingUserData:', loadingUserData);
+
+  if (loadingSession || loadingUserData) return <Loading />
 
   if(!session) return <Auth/>
-
-  if (loadingSession) {
-    return <div>Loading...</div>;
-  }
-
+  
   if(!habit) { 
     return <Onboarding session={session} onHabitSet={setHabit} />
   }
@@ -276,12 +322,7 @@ function App() {
             </button>
           </div>
 
-          <div className="mt-4 bg-white/70 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white/40">
-            <p className="text-sm text-gray-500">Current streak</p>
-            <h2 className="text-2xl font-bold text-pink-500">
-              {streakCount} days
-            </h2>
-          </div>
+          <Streak streakCount={streakCount} habit={habit}/>
 
           <div className="mt-4">
             <GoodBad 
@@ -292,6 +333,7 @@ function App() {
           </div>
 
           <FeedbackMsg message={feedback} submitted={submitted}/>
+
         </header>
 
         {clicked && (

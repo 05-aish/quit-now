@@ -6,7 +6,7 @@ function Entries({ entries, deleteEntry }) {
           key={entry.id}
           className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
-          <p className="text-xs text-gray-400">{entry.date}</p>
+          <p className="text-xs text-gray-400">{new Date(entry.date).toDateString()}</p>
 
           <p className="mt-1">
             {entry.response ? (

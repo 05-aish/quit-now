@@ -11,10 +11,11 @@ function Onboarding({ session, onHabitSet }) {
         const { data, error } = await supabase.from('user_meta').upsert({
             user_id: session.user.id,
             habit: selectedHabit === 'other' ? customHabit : selectedHabit
-        });
+        }, { onConflict: 'user_id' });
         if (error) {
             console.error('Error saving habit:', error);
         } else {
+            console.log('saving habit for user:', session.user.id)
             onHabitSet(selectedHabit === 'other' ? customHabit : selectedHabit);
         }
     };
