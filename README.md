@@ -1,16 +1,73 @@
-# React + Vite
+# Quit Now
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A habit tracking app that helps users log daily progress, maintain streaks, and reflect on their behavior.
 
-Currently, two official plugins are available:
+## Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+https://quit-now-topaz.vercel.app/
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* User authentication using Supabase
+* Daily check-in system (one entry per day)
+* Streak tracking with reset logic
+* Manual logging for additional notes
+* Habit selection during onboarding
+* Basic achievement milestones
+* Persistent data with Supabase
+* Password visibility toggle
+* Form validation and error handling
 
-## Expanding the ESLint configuration
+## Core Logic
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* Users can log only once per day
+* Streak increases only if the previous entry was yesterday
+* Streak resets if a day is missed or a negative entry is logged
+* Daily logs and manual logs are handled separately
+
+## Tech Stack
+
+* React
+* Tailwind CSS
+* Supabase (Auth and Database)
+* Vercel (deployment)
+
+## Getting Started
+
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env` file:
+
+```env
+VITE_SUPABASE_URL=your_url
+VITE_SUPABASE_ANON_KEY=your_key
+```
+
+Run the project:
+
+```bash
+npm run dev
+```
+
+## Future Improvements
+
+* Analytics (weekly trends, success rate)
+* Better input validation
+* UI refinements
+* Mobile responsiveness
+
+## Author
+
+Your Name
+https://github.com/05-aish
