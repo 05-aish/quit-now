@@ -59,19 +59,17 @@ function App() {
   //fetch user meta table containing streakcount and lastentry date
   const fetchUserMeta = async () => {
 
-    if (!session) return
+    if (!session) {
+      setLoadingUserData(false)
+      return;
+    }
 
     const { data, error } = await supabase.from('user_meta').select('*').eq('user_id', session.user.id);
-
-    console.log("Fetched user meta:", data);
     
     if (!error && data.length > 0) {
         setStreakCount(data[0].streak_count)
         setLastEntryDate(data[0].last_entry_date)
         setHabit(data[0].habit)
-    }
-    else{
-      console.log("No user meta found", error);
     }
     setLoadingUserData(false);
     
@@ -86,8 +84,6 @@ function App() {
       last_entry_date: newLastEntryDate
     },
     { onConflict: 'user_id' })
-    if (error) console.log(data, error);
-    
   }
 
   //state of input field
@@ -105,8 +101,6 @@ function App() {
   }
 
   useEffect(() => {
-    if (!session) return;
-
     fetchEntries()
     fetchUserMeta()
     fetchAchievements()
