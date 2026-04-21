@@ -69,5 +69,4 @@ npm run dev
 
 ## Author
 
-Your Name
 https://github.com/05-aish
