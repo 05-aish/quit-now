@@ -347,8 +347,10 @@ function App() {
           <Entries entries={entries} deleteEntry={deleteEntry}/>
         </main>
 
-      <footer className="bg-white/80 backdrop-blur-md rounded-2xl px-4 py-2">
-        <BottomButtons onResponseTwo={handleAchievements} onAddClick={handleManualLog} onRuinedDay={() => handleResponse(false)}/>
+      <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md">
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl px-4 py-3 shadow-md flex items-center justify-between">
+          <BottomButtons onResponseTwo={handleAchievements} onAddClick={handleManualLog} onRuinedDay={() => handleResponse(false)}/>
+        </div>
       </footer>
 
     {achievementClick && (
